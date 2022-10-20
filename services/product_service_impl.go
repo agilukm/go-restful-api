@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"database/sql"
+	"go-restful-api/exception"
 	"go-restful-api/helper"
 	"go-restful-api/model/entity"
 	"go-restful-api/model/request"
@@ -51,7 +52,10 @@ func (service ProductServiceImpl) Update(ctx context.Context, request request.Pr
 	defer helper.CommitOrRollback(tx)
 
 	product, err := service.ProductRepository.FindById(ctx, tx, request.Id)
-	helper.PanicIfError(err)
+
+	if err != nil {
+		panic(exception.NewNotFoundError(err.Error()))
+	}
 
 	product.Name = request.Name
 	product.Price = int64(request.Price)
@@ -66,7 +70,10 @@ func (service ProductServiceImpl) Delete(ctx context.Context, id int) {
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 	product, err := service.ProductRepository.FindById(ctx, tx, id)
-	helper.PanicIfError(err)
+
+	if err != nil {
+		panic(exception.NewNotFoundError(err.Error()))
+	}
 
 	service.ProductRepository.Delete(ctx, tx, product)
 }
@@ -78,7 +85,9 @@ func (service ProductServiceImpl) FindById(ctx context.Context, id int) response
 
 	product, err := service.ProductRepository.FindById(ctx, tx, id)
 
-	helper.PanicIfError(err)
+	if err != nil {
+		panic(exception.NewNotFoundError(err.Error()))
+	}
 
 	return helper.ToProductResponse(product)
 }

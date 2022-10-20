@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"go-restful-api/helper"
 	"go-restful-api/model/entity"
 )
@@ -48,15 +49,15 @@ func (repository *ProductRepositoryImpl) FindById(ctx context.Context, tx *sql.T
 
 	rows, err := tx.QueryContext(ctx, query, id)
 	helper.PanicIfError(err)
+	defer rows.Close()
 
 	product := entity.Product{}
 	if rows.Next() {
-		defer rows.Close()
 		err := rows.Scan(&product.Id, &product.Name, &product.Price)
 		helper.PanicIfError(err)
 		return product, nil
 	} else {
-		return product, err
+		return product, errors.New("product not found")
 	}
 
 }

@@ -4,13 +4,13 @@ import (
 	"go-restful-api/app"
 	"go-restful-api/controller"
 	"go-restful-api/helper"
+	"go-restful-api/middleware"
 	"go-restful-api/repository"
 	"go-restful-api/services"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/julienschmidt/httprouter"
 )
 
 func main() {
@@ -19,17 +19,10 @@ func main() {
 	productRepository := repository.NewProductRepository()
 	productService := services.NewProductService(productRepository, db, validate)
 	productController := controller.NewProductController(productService)
-	router := httprouter.New()
-
-	router.GET("/api/products/", productController.FindAll)
-	router.GET("/api/products/:id", productController.FindById)
-	router.POST("/api/products/", productController.Create)
-	router.PATCH("/api/products/:id", productController.Update)
-	router.DELETE("/api/products/:id", productController.Delete)
-
+	router := app.NewRouter(productController)
 	server := http.Server{
 		Addr:    "localhost:3000",
-		Handler: router,
+		Handler: middleware.NewAuthMiddleware(router),
 	}
 
 	err := server.ListenAndServe()
