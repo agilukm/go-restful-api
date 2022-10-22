@@ -1,24 +1,31 @@
 package main
 
 import (
-	"go-restful-api/helper"
+	"fmt"
 	"go-restful-api/middleware"
+	"go-restful-api/utils"
 	"net/http"
 
 	_ "github.com/go-sql-driver/mysql"
 )
 
+var config, err = utils.LoadConfig()
+
 func NewServer(middleware *middleware.AuthMiddleware) *http.Server {
 	return &http.Server{
-		Addr:    "localhost:3000",
+		Addr:    "localhost:" + config.AppPort,
 		Handler: middleware,
 	}
 }
 
 func main() {
+	if err != nil {
+		panic("cannot load config")
+	}
+
+	fmt.Println(config)
 	server := InitServer()
 
-	err := server.ListenAndServe()
+	server.ListenAndServe()
 
-	helper.PanicIfError(err)
 }

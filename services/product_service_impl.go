@@ -2,7 +2,7 @@ package services
 
 import (
 	"context"
-	"database/sql"
+	"github.com/jmoiron/sqlx"
 	"go-restful-api/exception"
 	"go-restful-api/helper"
 	"go-restful-api/model/entity"
@@ -15,11 +15,11 @@ import (
 
 type ProductServiceImpl struct {
 	ProductRepository repository.ProductRepository
-	DB                *sql.DB
+	DB                *sqlx.DB
 	Validate          *validator.Validate
 }
 
-func NewProductService(productRepository repository.ProductRepository, db *sql.DB, validate *validator.Validate) ProductService {
+func NewProductService(productRepository repository.ProductRepository, db *sqlx.DB, validate *validator.Validate) ProductService {
 	return &ProductServiceImpl{
 		ProductRepository: productRepository,
 		DB:                db,

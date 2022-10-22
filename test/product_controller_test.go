@@ -2,8 +2,8 @@ package test
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
+	"github.com/jmoiron/sqlx"
 	"go-restful-api/app"
 	"go-restful-api/controller"
 	"go-restful-api/helper"
@@ -24,8 +24,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupTestDB() *sql.DB {
-	db, err := sql.Open("mysql", "root:1@tcp(localhost:3306)/belajar_go")
+func setupTestDB() *sqlx.DB {
+	db, err := sqlx.Open("mysql", "root:1@tcp(localhost:3306)/belajar_go")
 	helper.PanicIfError(err)
 
 	db.SetMaxIdleConns(5)
@@ -36,7 +36,7 @@ func setupTestDB() *sql.DB {
 	return db
 }
 
-func setupRouter(db *sql.DB) http.Handler {
+func setupRouter(db *sqlx.DB) http.Handler {
 	validate := validator.New()
 	productRepository := repository.NewProductRepository()
 	productService := services.NewProductService(productRepository, db, validate)
@@ -46,7 +46,7 @@ func setupRouter(db *sql.DB) http.Handler {
 	return middleware.NewAuthMiddleware(router)
 }
 
-func truncateProduct(db *sql.DB) {
+func truncateProduct(db *sqlx.DB) {
 	db.Exec("TRUNCATE product")
 }
 
