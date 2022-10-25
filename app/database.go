@@ -1,13 +1,16 @@
 package app
 
 import (
-	"database/sql"
+	"fmt"
+	"github.com/jmoiron/sqlx"
 	"go-restful-api/helper"
+	"go-restful-api/utils"
 	"time"
 )
 
-func NewDB() *sql.DB {
-	db, err := sql.Open("mysql", "root:1@tcp(localhost:3306)/belajar_go")
+func NewDB() *sqlx.DB {
+	config, _ := utils.LoadConfig()
+	db, err := sqlx.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", config.DBUsername, config.DBPassword, config.DBHost, config.DBPort, config.DBDatabase))
 	helper.PanicIfError(err)
 
 	db.SetMaxIdleConns(5)
