@@ -24,7 +24,6 @@ func validationErrors(w http.ResponseWriter, r *http.Request, err interface{}) b
 	exception, ok := err.(validator.ValidationErrors)
 	if ok {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnprocessableEntity)
 
 		response := response.Response{
 			Code:   http.StatusUnprocessableEntity,
@@ -32,7 +31,7 @@ func validationErrors(w http.ResponseWriter, r *http.Request, err interface{}) b
 			Data:   exception.Error(),
 		}
 
-		helper.WriteToResponseBody(w, response)
+		helper.WriteToResponseBody(w, response, http.StatusUnprocessableEntity)
 		return true
 	} else {
 		return false
@@ -43,7 +42,6 @@ func notFoundError(w http.ResponseWriter, r *http.Request, err interface{}) bool
 	exception, ok := err.(NotFoundError)
 	if ok {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
 
 		response := response.Response{
 			Code:   http.StatusNotFound,
@@ -51,7 +49,7 @@ func notFoundError(w http.ResponseWriter, r *http.Request, err interface{}) bool
 			Data:   exception.Error,
 		}
 
-		helper.WriteToResponseBody(w, response)
+		helper.WriteToResponseBody(w, response, http.StatusNotFound)
 		return true
 	} else {
 		return false
@@ -60,7 +58,6 @@ func notFoundError(w http.ResponseWriter, r *http.Request, err interface{}) bool
 
 func internalServerError(w http.ResponseWriter, r *http.Request, err interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusInternalServerError)
 
 	response := response.Response{
 		Code:   http.StatusInternalServerError,
@@ -68,5 +65,5 @@ func internalServerError(w http.ResponseWriter, r *http.Request, err interface{}
 		Data:   err,
 	}
 
-	helper.WriteToResponseBody(w, response)
+	helper.WriteToResponseBody(w, response, http.StatusInternalServerError)
 }

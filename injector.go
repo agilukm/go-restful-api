@@ -15,17 +15,17 @@ import (
 	"net/http"
 )
 
-var productSet = wire.NewSet(
-	repository.NewProductRepository,
-	services.NewProductService,
-	controller.NewProductController,
+var workspaceSet = wire.NewSet(
+	repository.NewWorkspaceRepository,
+	services.NewWorkspaceService,
+	controller.NewWorkspaceController,
 )
 
 func InitServer() *http.Server {
 	wire.Build(
 		app.NewDB,
 		validator.New,
-		productSet,
+		workspaceSet,
 		app.NewRouter,
 		wire.Bind(new(http.Handler), new(*httprouter.Router)),
 		middleware.NewAuthMiddleware,
