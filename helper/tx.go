@@ -1,8 +1,8 @@
 package helper
 
-import "database/sql"
+import "github.com/jmoiron/sqlx"
 
-func CommitOrRollback(tx *sql.Tx) {
+func CommitOrRollback(tx *sqlx.Tx) {
 	err := recover()
 	if err != nil {
 		errRollback := tx.Rollback()

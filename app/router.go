@@ -7,14 +7,14 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func NewRouter(productController controller.ProductController) *httprouter.Router {
+func NewRouter(workspaceController controller.WorkspaceController) *httprouter.Router {
 	router := httprouter.New()
 
-	router.GET("/api/products", productController.FindAll)
-	router.GET("/api/products/:id", productController.FindById)
-	router.POST("/api/products", productController.Create)
-	router.PATCH("/api/products/:id", productController.Update)
-	router.DELETE("/api/products/:id", productController.Delete)
+	router.GET("/api/workspaces", workspaceController.FindAll)
+	router.GET("/api/workspaces/:id", workspaceController.FindById)
+	router.POST("/api/workspaces", workspaceController.Create)
+	router.PATCH("/api/workspaces/:id", workspaceController.Update)
+	router.DELETE("/api/workspaces/:id", workspaceController.Delete)
 
 	router.PanicHandler = exception.ErrorHandler
 

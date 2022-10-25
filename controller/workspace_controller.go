@@ -7,13 +7,13 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func NewProductController(productService services.ProductService) ProductController {
-	return &ProductControllerImpl{
-		ProductService: productService,
+func NewWorkspaceController(workspaceService services.WorkspaceService) WorkspaceController {
+	return &WorkspaceControllerImpl{
+		WorkspaceService: workspaceService,
 	}
 }
 
-type ProductController interface {
+type WorkspaceController interface {
 	Create(w http.ResponseWriter, r *http.Request, params httprouter.Params)
 	Update(w http.ResponseWriter, r *http.Request, params httprouter.Params)
 	Delete(w http.ResponseWriter, r *http.Request, params httprouter.Params)

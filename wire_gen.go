@@ -24,12 +24,12 @@ import (
 // Injectors from injector.go:
 
 func InitServer() *http.Server {
-	productRepository := repository.NewProductRepository()
+	workspaceRepository := repository.NewWorkspaceRepository()
 	db := app.NewDB()
 	validate := validator.New()
-	productService := services.NewProductService(productRepository, db, validate)
-	productController := controller.NewProductController(productService)
-	router := app.NewRouter(productController)
+	workspaceService := services.NewWorkspaceService(workspaceRepository, db, validate)
+	workspaceController := controller.NewWorkspaceController(workspaceService)
+	router := app.NewRouter(workspaceController)
 	authMiddleware := middleware.NewAuthMiddleware(router)
 	server := NewServer(authMiddleware)
 	return server
@@ -37,4 +37,4 @@ func InitServer() *http.Server {
 
 // injector.go:
 
-var productSet = wire.NewSet(repository.NewProductRepository, services.NewProductService, controller.NewProductController)
+var workspaceSet = wire.NewSet(repository.NewWorkspaceRepository, services.NewWorkspaceService, controller.NewWorkspaceController)
