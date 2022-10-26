@@ -4,6 +4,9 @@ import (
 	"context"
 	"go-restful-api/helper"
 	"go-restful-api/model/response"
+	"go-restful-api/utils"
+	"io"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -27,7 +30,30 @@ func (middleware AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		newContext := context.WithValue(r.Context(), "userinfo", userinfo)
 
 		middleware.Handler.ServeHTTP(w, r.WithContext(newContext))
-	} else if r.Header.Get("X-API-KEY") != "RAHASIA" {
+	} else if r.Header.Get("x-userinfo") == "" && r.Header.Get("Authorization") != "" {
+		config, _ := utils.LoadConfig()
+
+		client := &http.Client{}
+
+		req, _ := http.NewRequest("GET", config.BaseURL+"/user/me", nil)
+		req.Header.Add("Authorization", r.Header.Get("Authorization"))
+
+		resp, _ := client.Do(req)
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusOK {
+			bodyBytes, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+			userinfo := string(bodyBytes)
+
+			newContext := context.WithValue(r.Context(), "userinfo", userinfo)
+
+			middleware.Handler.ServeHTTP(w, r.WithContext(newContext))
+		}
+	} else {
 		w.Header().Set("Content-Type", "application/json")
 
 		response := response.Response{
@@ -36,12 +62,5 @@ func (middleware AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Reques
 		}
 
 		helper.WriteToResponseBody(w, response, http.StatusUnauthorized)
-	} else {
-		newContext := context.WithValue(r.Context(), "key", "val")
-		middleware.Handler.ServeHTTP(w, r.WithContext(newContext))
 	}
-}
-
-func setUserHeader(userInfo string) {
-
 }
