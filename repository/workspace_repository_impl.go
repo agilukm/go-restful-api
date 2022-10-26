@@ -9,7 +9,6 @@ import (
 	"go-restful-api/model/entity"
 	"go-restful-api/utils"
 	"net/url"
-	"reflect"
 )
 
 type WorkspaceRepositoryImpl struct {
@@ -68,12 +67,18 @@ func (repository *WorkspaceRepositoryImpl) FindById(ctx context.Context, tx *sql
 
 func (repository *WorkspaceRepositoryImpl) FindAll(ctx context.Context, tx *sqlx.Tx, values url.Values) ([]entity.Workspace, interface{}) {
 	query := "select id, name, user_id, token, token_expired_at from workspaces"
-	//limit, _ := strconv.Atoi(params.ByName("per_page"))
+	countQuery := "select count(id) from workspaces"
 
 	userinfo := utils.GetUserinfo(ctx)
-	fmt.Println(userinfo.Id)
-	fmt.Println(userinfo.Name)
-	fmt.Println(userinfo.Email)
+
+	level := userinfo.Level
+
+	switch level {
+	case "LECTURER":
+		query = fmt.Sprintf("%s where user_id = %s", query, userinfo.Id)
+		countQuery = fmt.Sprintf("%s where user_id = %s", countQuery, userinfo.Id)
+	default:
+	}
 
 	var workspaces []entity.Workspace
 	newStruct := new(entity.WorkspaceFilterable)
@@ -81,18 +86,22 @@ func (repository *WorkspaceRepositoryImpl) FindAll(ctx context.Context, tx *sqlx
 	query = helper.Filter(values, newStruct, query)
 	query = helper.Sort(values, newStruct, query)
 
-	fmt.Println(query)
+	countQuery = helper.Filter(values, newStruct, countQuery)
+	countQuery = helper.Sort(values, newStruct, countQuery)
+
+	query, _ = helper.Pager(values, query)
+
 	rows, err := tx.QueryContext(ctx, query)
 	helper.PanicIfError(err)
-
+	countRows := 0
 	for rows.Next() {
 		Workspace := entity.Workspace{}
 		err := rows.Scan(&Workspace.Id, &Workspace.Name, &Workspace.UserId, &Workspace.Token, &Workspace.TokenExpiredAt)
 		helper.PanicIfError(err)
 		workspaces = append(workspaces, Workspace)
+		countRows++
 	}
 
-	countQuery := "select count(id) from workspaces"
 	var total int
 
 	tx.QueryRow(countQuery).Scan(&total)
@@ -100,11 +109,7 @@ func (repository *WorkspaceRepositoryImpl) FindAll(ctx context.Context, tx *sqlx
 	defer rows.Close()
 
 	return workspaces, map[string]int{
-		"total_record": total,
-		"total_page":   2,
+		"total": total,
+		"count": countRows,
 	}
-}
-
-func getStructTag(f reflect.StructField, tagName string) string {
-	return string(f.Tag.Get(tagName))
 }

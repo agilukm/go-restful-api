@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-var config, err = utils.LoadConfig()
+var config, _ = utils.LoadConfig()
 
 func NewServer(middleware *middleware.AuthMiddleware) *http.Server {
 	return &http.Server{

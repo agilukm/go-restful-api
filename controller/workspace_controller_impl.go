@@ -40,7 +40,7 @@ func (controller *WorkspaceControllerImpl) Create(w http.ResponseWriter, r *http
 	workspaceResponse := controller.WorkspaceService.Create(r.Context(), workspaceCreateRequest)
 	httpResponse := response.Response{
 		Code:   201,
-		Status: "OK",
+		Status: "CREATED",
 		Data:   workspaceResponse,
 	}
 
@@ -101,8 +101,9 @@ func (controller *WorkspaceControllerImpl) FindById(w http.ResponseWriter, r *ht
 }
 
 func (controller *WorkspaceControllerImpl) FindAll(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	workspaceResponse, _ := controller.WorkspaceService.Browse(r.Context(), r.URL.Query())
+	workspaceResponse, pager := controller.WorkspaceService.Browse(r.Context(), r.URL.Query())
 	httpResponse := response.Response{
+		Meta:   pager,
 		Code:   200,
 		Status: "OK",
 		Data:   workspaceResponse,

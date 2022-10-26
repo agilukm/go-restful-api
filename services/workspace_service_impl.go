@@ -9,7 +9,9 @@ import (
 	"go-restful-api/model/entity"
 	"go-restful-api/model/request"
 	"go-restful-api/repository"
+	"go-restful-api/utils"
 	"net/url"
+	"strconv"
 )
 
 type WorkspaceServiceImpl struct {
@@ -32,10 +34,11 @@ func (service WorkspaceServiceImpl) Create(ctx context.Context, request request.
 	tx, err := service.DB.Beginx()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
-
+	userinfo := utils.GetUserinfo(ctx)
+	UserId, _ := strconv.ParseInt(userinfo.Id, 0, 64)
 	workspace := entity.Workspace{
 		Name:           request.Name,
-		UserId:         int64(request.UserId),
+		UserId:         UserId,
 		Token:          request.Token,
 		TokenExpiredAt: request.TokenExpiredAt,
 	}
@@ -99,8 +102,6 @@ func (service WorkspaceServiceImpl) Browse(ctx context.Context, values url.Value
 	defer helper.CommitOrRollback(tx)
 
 	workspaces, paginator := service.WorkspaceRepository.FindAll(ctx, tx, values)
-
-	helper.PanicIfError(err)
 
 	return workspaces, paginator
 }

@@ -1,11 +1,40 @@
 package helper
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 )
+
+func Pager(values url.Values, query string) (q string, e error) {
+	strLimit := values.Get("limit")
+	limit, err := strconv.Atoi(strLimit)
+	if strLimit != "" {
+		if err != nil || limit < 0 {
+			err = errors.New("limit query parameter is no valid number")
+			return "", err
+		}
+	} else {
+		limit = 10
+	}
+
+	strOffset := values.Get("offset")
+	offset, err := strconv.Atoi(strOffset)
+
+	if strOffset != "" {
+		if err != nil || offset < -1 {
+			errors.New("offset query parameter is no valid number")
+			return
+		}
+	} else {
+		offset = 0
+	}
+
+	return fmt.Sprintf("%s limit %d offset %d", query, limit, offset), nil
+}
 
 func Filter(values url.Values, newStruct any, query string) string {
 	metaValue := reflect.ValueOf(newStruct).Elem()
