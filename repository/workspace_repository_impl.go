@@ -78,10 +78,10 @@ func (repository *WorkspaceRepositoryImpl) FindAll(ctx context.Context, tx *sqlx
 	var workspaces []entity.Workspace
 	newStruct := new(entity.WorkspaceFilterable)
 
-	query = utils.Filter(values, newStruct, query)
+	query = helper.Filter(values, newStruct, query)
+	query = helper.Sort(values, newStruct, query)
 
-	query = fmt.Sprintf("%s order by ID desc", query)
-
+	fmt.Println(query)
 	rows, err := tx.QueryContext(ctx, query)
 	helper.PanicIfError(err)
 
