@@ -15,6 +15,9 @@ func NewRouter(workspaceController controller.WorkspaceController) *httprouter.R
 	router.POST("/api/workspaces", workspaceController.Create)
 	router.PATCH("/api/workspaces/:id", workspaceController.Update)
 	router.DELETE("/api/workspaces/:id", workspaceController.Delete)
+	router.PATCH("/api/workspaces/:id/token", workspaceController.GenerateToken)
+	router.POST("/api/workspaces/join", workspaceController.Join)
+	router.POST("/api/workspaces/remove", workspaceController.RemoveMember)
 
 	router.PanicHandler = exception.ErrorHandler
 

@@ -80,7 +80,7 @@ func (controller *WorkspaceControllerImpl) Delete(w http.ResponseWriter, r *http
 		Status: "OK",
 	}
 
-	helper.WriteToResponseBody(w, httpResponse, http.StatusOK)
+	helper.WriteToResponseBody(w, httpResponse, http.StatusNoContent)
 }
 
 func (controller *WorkspaceControllerImpl) FindById(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
@@ -110,4 +110,49 @@ func (controller *WorkspaceControllerImpl) FindAll(w http.ResponseWriter, r *htt
 	}
 
 	helper.WriteToResponseBody(w, httpResponse, http.StatusOK)
+}
+
+func (controller *WorkspaceControllerImpl) GenerateToken(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	workspaceId := params.ByName("id")
+	generateTokenRequest := request.GenerateTokenRequest{}
+	helper.ReadFromRequestBody(r, &generateTokenRequest)
+
+	id, err := strconv.Atoi(workspaceId)
+
+	helper.PanicIfError(err)
+
+	workspaceResponse := controller.WorkspaceService.GenerateToken(r.Context(), generateTokenRequest, id)
+	httpResponse := response.Response{
+		Code:   200,
+		Status: "OK",
+		Data:   workspaceResponse,
+	}
+
+	helper.WriteToResponseBody(w, httpResponse, http.StatusOK)
+}
+
+func (controller *WorkspaceControllerImpl) Join(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	joinWorkspaceRequest := request.JoinWorkspaceRequest{}
+	helper.ReadFromRequestBody(r, &joinWorkspaceRequest)
+	workspaceResponse := controller.WorkspaceService.Join(r.Context(), joinWorkspaceRequest)
+	httpResponse := response.Response{
+		Code:   200,
+		Status: "OK",
+		Data:   workspaceResponse,
+	}
+
+	helper.WriteToResponseBody(w, httpResponse, http.StatusOK)
+}
+
+func (controller *WorkspaceControllerImpl) RemoveMember(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
+	joinRemoveWorkspaceRequest := request.RemoveWorkspaceRequest{}
+	helper.ReadFromRequestBody(r, &joinRemoveWorkspaceRequest)
+
+	controller.WorkspaceService.RemoveMember(r.Context(), joinRemoveWorkspaceRequest)
+	httpResponse := response.Response{
+		Code:   204,
+		Status: "OK",
+	}
+
+	helper.WriteToResponseBody(w, httpResponse, http.StatusNoContent)
 }

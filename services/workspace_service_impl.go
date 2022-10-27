@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"github.com/go-playground/validator/v10"
 	"github.com/jmoiron/sqlx"
 	"go-restful-api/exception"
@@ -10,6 +11,7 @@ import (
 	"go-restful-api/model/request"
 	"go-restful-api/repository"
 	"go-restful-api/utils"
+	"gopkg.in/guregu/null.v3"
 	"net/url"
 	"strconv"
 )
@@ -104,4 +106,76 @@ func (service WorkspaceServiceImpl) Browse(ctx context.Context, values url.Value
 	workspaces, paginator := service.WorkspaceRepository.FindAll(ctx, tx, values)
 
 	return workspaces, paginator
+}
+
+func (service WorkspaceServiceImpl) GenerateToken(ctx context.Context, request request.GenerateTokenRequest, id int) entity.Workspace {
+	err := service.Validate.Struct(request)
+	helper.PanicIfError(err)
+
+	tx, err := service.DB.Beginx()
+	helper.PanicIfError(err)
+	defer helper.CommitOrRollback(tx)
+
+	workspace, err := service.WorkspaceRepository.FindById(ctx, tx, id)
+
+	expired_at := sql.NullString{
+		String: request.TokenExpiredAt,
+		Valid:  true,
+	}
+
+	workspace.TokenExpiredAt = null.String{expired_at}
+
+	workspace.Token = null.NewString(utils.GenerateString(5), true)
+
+	if err != nil {
+		panic(exception.NewNotFoundError(err.Error()))
+	}
+
+	service.WorkspaceRepository.GenerateToken(ctx, tx, workspace)
+
+	return workspace
+}
+
+func (service WorkspaceServiceImpl) Join(ctx context.Context, request request.JoinWorkspaceRequest) entity.WorkspaceMember {
+	err := service.Validate.Struct(request)
+	helper.PanicIfError(err)
+	userinfo := utils.GetUserinfo(ctx)
+
+	tx, err := service.DB.Beginx()
+	helper.PanicIfError(err)
+	defer helper.CommitOrRollback(tx)
+	userId, err := strconv.Atoi(userinfo.Id)
+	helper.PanicIfError(err)
+
+	member := entity.WorkspaceMember{
+		WorkspaceId: request.WorkspaceId,
+		UserId:      int64(userId),
+		Type:        request.Type,
+	}
+	repository.FindWithToken(ctx, tx, member, request.Token)
+	member = service.WorkspaceRepository.Join(ctx, tx, member, request.Token)
+
+	return member
+}
+
+func (service WorkspaceServiceImpl) RemoveMember(ctx context.Context, request request.RemoveWorkspaceRequest) {
+	err := service.Validate.Struct(request)
+	helper.PanicIfError(err)
+
+	tx, err := service.DB.Beginx()
+	helper.PanicIfError(err)
+	defer helper.CommitOrRollback(tx)
+
+	_, err = service.WorkspaceRepository.FindById(ctx, tx, int(request.WorkspaceId))
+
+	if err != nil {
+		panic(exception.NewNotFoundError(err.Error()))
+	}
+
+	member := entity.WorkspaceMember{
+		WorkspaceId: request.WorkspaceId,
+		UserId:      request.UserId,
+	}
+
+	service.WorkspaceRepository.RemoveMember(ctx, tx, member)
 }

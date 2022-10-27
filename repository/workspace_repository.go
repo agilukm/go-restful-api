@@ -13,4 +13,7 @@ type WorkspaceRepository interface {
 	Delete(ctx context.Context, tx *sqlx.Tx, workspace entity.Workspace)
 	FindById(ctx context.Context, tx *sqlx.Tx, id int) (entity.Workspace, error)
 	FindAll(ctx context.Context, tx *sqlx.Tx, values url.Values) ([]entity.Workspace, interface{})
+	GenerateToken(ctx context.Context, tx *sqlx.Tx, workspace entity.Workspace) entity.Workspace
+	Join(ctx context.Context, tx *sqlx.Tx, member entity.WorkspaceMember, token string) entity.WorkspaceMember
+	RemoveMember(ctx context.Context, tx *sqlx.Tx, member entity.WorkspaceMember)
 }

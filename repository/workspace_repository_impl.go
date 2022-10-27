@@ -2,9 +2,10 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
+	"go-restful-api/exception"
 	"go-restful-api/helper"
 	"go-restful-api/model/entity"
 	"go-restful-api/utils"
@@ -48,21 +49,20 @@ func (repository *WorkspaceRepositoryImpl) Delete(ctx context.Context, tx *sqlx.
 }
 
 func (repository *WorkspaceRepositoryImpl) FindById(ctx context.Context, tx *sqlx.Tx, id int) (entity.Workspace, error) {
-	query := "select id, name, user_id from workspaces where id = ?"
+	query := "select * from workspaces where id = ?"
 
-	rows, err := tx.QueryContext(ctx, query, id)
+	rows, err := tx.QueryxContext(ctx, query, id)
 	helper.PanicIfError(err)
 	defer rows.Close()
 
 	Workspace := entity.Workspace{}
 	if rows.Next() {
-		err := rows.Scan(&Workspace.Id, &Workspace.Name, &Workspace.UserId)
+		err := rows.StructScan(&Workspace)
 		helper.PanicIfError(err)
 		return Workspace, nil
 	} else {
 		return Workspace, errors.New("Workspace not found")
 	}
-
 }
 
 func (repository *WorkspaceRepositoryImpl) FindAll(ctx context.Context, tx *sqlx.Tx, values url.Values) ([]entity.Workspace, interface{}) {
@@ -111,5 +111,51 @@ func (repository *WorkspaceRepositoryImpl) FindAll(ctx context.Context, tx *sqlx
 	return workspaces, map[string]int{
 		"total": total,
 		"count": countRows,
+	}
+}
+
+func (repository *WorkspaceRepositoryImpl) GenerateToken(ctx context.Context, tx *sqlx.Tx, Workspace entity.Workspace) entity.Workspace {
+	query := "update workspaces set token=?, token_expired_at=? where id = ?"
+
+	_, err := tx.ExecContext(ctx, query, Workspace.Token, Workspace.TokenExpiredAt, Workspace.Id)
+
+	helper.PanicIfError(err)
+	return Workspace
+}
+
+func (repository *WorkspaceRepositoryImpl) Join(ctx context.Context, tx *sqlx.Tx, member entity.WorkspaceMember, token string) entity.WorkspaceMember {
+	query := "insert ignore into workspace_members (user_id, workspace_id, type) VALUES (?,?,?)"
+
+	result, err := tx.ExecContext(ctx, query, member.UserId, member.WorkspaceId, member.Type)
+	id, err := result.LastInsertId()
+	helper.PanicIfError(err)
+
+	member.Id = id
+
+	return member
+}
+
+func (repository *WorkspaceRepositoryImpl) RemoveMember(ctx context.Context, tx *sqlx.Tx, member entity.WorkspaceMember) {
+	query := "delete from workspace_members where user_id=? and workspace_id = ?"
+
+	_, err := tx.ExecContext(ctx, query, member.UserId, member.WorkspaceId)
+
+	helper.PanicIfError(err)
+}
+
+func FindWithToken(ctx context.Context, tx *sqlx.Tx, member entity.WorkspaceMember, token string) {
+	query := "select * from workspaces where id = ? and token = ?"
+
+	rows, err := tx.QueryxContext(ctx, query, member.WorkspaceId, token)
+	helper.PanicIfError(err)
+	defer rows.Close()
+
+	Workspace := entity.Workspace{}
+
+	if rows.Next() {
+		err := rows.StructScan(&Workspace)
+		helper.PanicIfError(err)
+	} else {
+		panic(exception.NewNotFoundError("Workspace with given token not found"))
 	}
 }
